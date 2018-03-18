@@ -223,12 +223,14 @@ firebase.initializeApp(config);
             userPlayer = 1;
             $("#player-1-name").text(playerOne.name);
             database.ref("playerOne").set(playerOne);
+            $("#sign-in").hide();
         } else if (playerTwo === undefined && userPlayer === 0) {
             var playerName = $("#enter-name").val().trim();
             playerTwo = new Player(playerName, 2);
             userPlayer = 2;
             $("#player-2-name").text(playerTwo.name);
             database.ref("playerTwo").set(playerTwo);
+            $("#sign-in").hide();
         } else {
             $('#fullModal').modal();
         }
@@ -258,43 +260,47 @@ firebase.initializeApp(config);
             console.log("player one removed");
             playerOne = undefined;
             database.ref("playerOne").remove();
+            $("#sign-in").show();
         } else if (userPlayer === 2) {
             console.log("player two removed");
             playerTwo = undefined;
             database.ref("playerTwo").remove();
+            $("#sign-in").show();
         }
         updateState();
     };
 
 
     //listener for player joining or leaving
-    database.ref().on("child_added", function () {
+    database.ref().on("child_added", function (snapshot) {
         console.log("player added");
+        console.log(snapshot.child("playerTwo").exists());
+        if (snapshot.child("playerTwo").exists()) {
+            database.ref("turn").set(1);
+        }
         updateState();
     }, function (errorObject) {
         console.log("The read failed: " + errorObject.code);
     });
     database.ref().on("child_removed", function () {
         console.log("player removed");
+        database.ref("turn").set(0)
         updateState();
     }, function (errorObject) {
         console.log("The read failed: " + errorObject.code);
     });
 
-    /*     database.ref("playerOne/choice").on("value", function(snapshot) {
-            if (snapshot.val() !== null) {
-                $("#player-1-item").text("Player one chooses: " + snapshot.val());
-            } else {
-                $("#player-1-item").text("");
-                $("#player-2-item").text("");
-            }
-        }); */
-    
-        //syncs local turn data with firebase upon turn update
+    //syncs local turn data with firebase upon turn update
     database.ref("turn").on("value", function (snapshot) {
         turn = snapshot.val();
-
-        if (turn == 3) {
+        console.log(turn);
+        if (turn == 0) {
+            $("#turn-diplasy").text("");
+        } else if (turn == 1) {
+            $("#turn-display").text("It is player one's turn.")
+        } else if(turn == 2) {
+            $("#turn-display").text("It is player two's turn.")
+        } else if (turn == 3) {
             compareChoices();
         }
     });
