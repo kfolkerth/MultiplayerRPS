@@ -10,14 +10,16 @@ var config = {
 };
 firebase.initializeApp(config);
 
+//function closure containing game logic
 (function rpsGame() {
 
+    //initializes player variables, to be filled in from firebase later
     var database = firebase.database();
     var playerOne = undefined;
     var playerTwo = undefined;
-    var userPlayer = 0;
+    var userPlayer = 0; //set to either 1 or 2 if the current user logins in as a player
 
-
+    //constructor for player object
     function Player(name, position) {
         this.name = name;
         this.wins = 0;
@@ -26,6 +28,8 @@ firebase.initializeApp(config);
         this.choice = null;
     }
 
+
+    //syncs local game state with firebase data
     function updateState() {
 
         database.ref().once("value", function (snapshot) {
@@ -54,6 +58,7 @@ firebase.initializeApp(config);
 
     }
 
+    //updates displayed information for player on frontend
     function updatePlayerDisplay(player) {
         if (player.position === 1 && userPlayer === 1) {
             $("#player-1-name").text(player.name);
@@ -73,6 +78,7 @@ firebase.initializeApp(config);
         }
     };
 
+    //function that writes out options for player 1 to choose from, only called if current user is player 1
     function addP1Options() {
 
         var rock = $("<h3>");
@@ -101,6 +107,7 @@ firebase.initializeApp(config);
 
     };
 
+    //the same as addP1Options, but for player two
     function addP2Options() {
 
         var rock = $("<h3>");
@@ -129,6 +136,7 @@ firebase.initializeApp(config);
 
     };
 
+    //pulls from firebase and then compares what each player has chosen for current round
     function compareChoices() {
 
         database.ref().once('value').then(function (snapshot) {
@@ -196,6 +204,7 @@ firebase.initializeApp(config);
         });
     };
 
+    //resets game state after round end
     function reset() {
         database.ref("turn").set(1);
         $("#player-1-item").text("");
@@ -205,6 +214,7 @@ firebase.initializeApp(config);
 
     }
 
+    //listener event for player login form
     $("#player-submit").on("click", function (event) {
 
         if (playerOne === undefined && userPlayer === 0) {
@@ -225,6 +235,7 @@ firebase.initializeApp(config);
         event.preventDefault();
     });
 
+    //listener event for selection of rock, paper, or scissors
     $(document).on("click", ".item", function () {
         console.log("rps clicked");
         if (userPlayer === 1 && playerTwo !== undefined) {
@@ -240,6 +251,8 @@ firebase.initializeApp(config);
         }
     });
 
+
+    //tracks when user has left the game and erases player data in firebase
     window.onbeforeunload = function () {
         if (userPlayer === 1) {
             console.log("player one removed");
@@ -254,6 +267,7 @@ firebase.initializeApp(config);
     };
 
 
+    //listener for player joining or leaving
     database.ref().on("child_added", function () {
         console.log("player added");
         updateState();
@@ -275,7 +289,8 @@ firebase.initializeApp(config);
                 $("#player-2-item").text("");
             }
         }); */
-
+    
+        //syncs local turn data with firebase upon turn update
     database.ref("turn").on("value", function (snapshot) {
         turn = snapshot.val();
 
